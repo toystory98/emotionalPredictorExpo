@@ -1,0 +1,32 @@
+{
+  "name": "react-native-indicator",
+  "version": "1.2.2",
+  "description": "React Native Indicator Component",
+  "main": "index.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/prettier --config .prettierrc --write lib/**/*.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wangdicoder/react-native-indicator.git"
+  },
+  "keywords": [
+    "react-native",
+    "indicator",
+    "loader",
+    "progress"
+  ],
+  "author": "Di Wang <wangdicoder@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wangdicoder/react-native-indicator/issues"
+  },
+  "homepage": "https://github.com/wangdicoder/react-native-indicator#readme",
+  "dependencies": {
+    "prop-types": "^15.6.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.19.1"
+  }
+}
