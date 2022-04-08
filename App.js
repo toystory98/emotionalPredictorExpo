@@ -62,29 +62,46 @@ export default function App() {
     await recording.stopAndUnloadAsync();
     await recording.createNewLoadedSoundAsync();
     await goForAxios(recording.getURI())
-
-    // console.log(recording.getURI());
   }
 
-  async function goForAxios(uri) {
+  async function goForAxios(audioUri) {
     setFromAxios(true);
     setIsFetch(true);
     setCaptionText('Processing');
-    axios.get("http://localhost:3001/predictor")
-      .then(response => {
-        console.log('getting data from axios', response.data.result);
-        console.log(uri);
-        setTimeout(() => {
-          setIsFetch(false);
-          setAxiosData(require('./picture/happy.png'));
-          setCaptionText('Happy');
-        }, 2000)
-      })
-      .catch(error => {
+    const formData = new FormData();
+    //   formData.append('Note', {
+    //     uri: require('./picture/happy.png'),
+    //     type: 'image/jpeg', 
+    //     name: "imagename.jpg",
+    //  });
+    formData.append('Note', {
+      uri: require('./picture/happy.png'),
+      type: 'image/png',
+      name: "imagename.png",
+    });
+    // formData.append('file', {
+    //   uri: audioUri,
+    //   name: 'audioReq',
+    //   type: 'audio/*',
+    // })
+    console.log("formData : ", formData);
+    axios({
+      method: "post",
+      url: "http://127.0.0.1:8000/predictor",
+      data: formData,
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then(response => {
+      console.log('getting data from axios', response.data.result);
+      // console.log(audioUri);
+      setIsFetch(false);
+      setAxiosData(require('./picture/happy.png'));
+      setCaptionText('Happy');
+    })
+      .catch(function () {
         setIsFetch(false);
         setAxiosData(require('./picture/error.png'));
-        setCaptionText('Please try again');
-        console.log(error);
+        setCaptionText('please try again.');
+        console.log('FAILURE!!');
       });
   };
 
@@ -109,7 +126,7 @@ export default function App() {
 
   async function pickDocument() {
     let result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
-    console.log(result);
+    await goForAxios(result.uri)
   }
 
   return (
@@ -138,7 +155,7 @@ export default function App() {
       </Block>
       <Block height={200} safe>
         <Text p bold center style={{ marginTop: 80, color: isDarkMode ? "#F3F3F3" : "#727272" }}
-          onPress={recordFlag? pickDocument : null} 
+          onPress={recordFlag ? pickDocument : null}
         >
           open from file
         </Text>
