@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "emotionalPredictorExpo",
+    "name": "emotional predictor",
     "slug": "emotionalPredictorExpo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/witch.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/witch.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
