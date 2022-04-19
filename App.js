@@ -1,10 +1,10 @@
 import { Audio } from 'expo-av';
 import React, { useState } from "react";
 import { Block, Text } from 'galio-framework';
-import axios from 'axios';
 import Feather from "react-native-vector-icons/Feather";
 import { TextLoader } from 'react-native-indicator';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 
 Feather.loadFont();
 import {
@@ -67,42 +67,47 @@ export default function App() {
   async function goForAxios(audioUri) {
     setFromAxios(true);
     setIsFetch(true);
+    setAxiosData(require('./picture/loading.png'));
     setCaptionText('Processing');
-    const formData = new FormData();
-    //   formData.append('Note', {
-    //     uri: require('./picture/happy.png'),
-    //     type: 'image/jpeg', 
-    //     name: "imagename.jpg",
-    //  });
-    formData.append('Note', {
-      uri: require('./picture/happy.png'),
-      type: 'image/png',
-      name: "imagename.png",
-    });
-    // formData.append('file', {
-    //   uri: audioUri,
-    //   name: 'audioReq',
-    //   type: 'audio/*',
-    // })
-    console.log("formData : ", formData);
-    axios({
-      method: "post",
-      url: "http://127.0.0.1:8000/predictor",
-      data: formData,
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then(response => {
-      console.log('getting data from axios', response.data.result);
-      // console.log(audioUri);
+
+    try {
+      await FileSystem.uploadAsync("http://127.0.0.1:8000/predictor", audioUri, {
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'sound',
+        mimeType: 'audio/mp4',
+      })
+        .then(response => {
+          if (response.status != 200) {
+            throw "Http Status is not 200";
+          }
+          const body = JSON.parse(response.body);
+          const result = body.result;
+
+          switch (result) {
+            case 'happy':
+              setIsFetch(false);
+              setAxiosData(require('./picture/happy.png'));
+              setCaptionText('Happy');
+              break;
+            case 'normal':
+              setIsFetch(false);
+              setAxiosData(require('./picture/normal.png'));
+              setCaptionText('Normal');
+              break;
+            case 'sad':
+              setIsFetch(false);
+              setAxiosData(require('./picture/sad.png'));
+              setCaptionText('Sad');
+              break;
+          }
+        })
+    } catch (e) {
+      console.log(e);
       setIsFetch(false);
-      setAxiosData(require('./picture/happy.png'));
-      setCaptionText('Happy');
-    })
-      .catch(function () {
-        setIsFetch(false);
-        setAxiosData(require('./picture/error.png'));
-        setCaptionText('please try again.');
-        console.log('FAILURE!!');
-      });
+      setAxiosData(require('./picture/error.png'));
+      setCaptionText('please try again.');
+    }
+
   };
 
   async function onPressButton() {
@@ -115,9 +120,6 @@ export default function App() {
       setCaptionText('recording');
       await startRecording();
     } else {
-      setAxiosData(null);
-      setImagePath(require('./picture/record-unpress.png'));
-      setCaptionText(`press button to record \nor open file to look emotional`);
       if (countOnPress > 0) {
         await stopRecording();
       }
