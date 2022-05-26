@@ -64,6 +64,55 @@ export default function App() {
     await goForAxios(recording.getURI())
   }
 
+  async function callApi(audioUri){
+    return Promise.race([
+      FileSystem.uploadAsync("http://127.0.0.1:8000/predictor", audioUri, {
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'sound',
+        mimeType: 'audio/mp4',
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ])
+    .then(
+      response => {
+        if (response.status != 200) {
+          throw "Http Status is not 200";
+        }
+        const body = JSON.parse(response.body);
+        const result = body.result;
+
+        switch (result) {
+          case 'happy':
+            setIsFetch(false);
+            setAxiosData(require('./picture/happy.png'));
+            setCaptionText('Happy');
+            break;
+          case 'normal':
+            setIsFetch(false);
+            setAxiosData(require('./picture/normal.png'));
+            setCaptionText('Normal');
+            break;
+          case 'sad':
+            setIsFetch(false);
+            setAxiosData(require('./picture/sad.png'));
+            setCaptionText('Sad');
+            break;
+          case 'angry':
+            setIsFetch(false);
+            setAxiosData(require('./picture/normal.png'));
+            setCaptionText('Sad');
+            break;
+        }
+      }
+    )
+    .catch(e => {
+      console.log(e);
+      setIsFetch(false);
+      setAxiosData(require('./picture/error.png'));
+      setCaptionText('please try again.');
+    })
+  }
+
   async function goForAxios(audioUri) {
     setFromAxios(true);
     setIsFetch(true);
@@ -71,36 +120,7 @@ export default function App() {
     setCaptionText('Processing');
 
     try {
-      await FileSystem.uploadAsync("http://127.0.0.1:8000/predictor", audioUri, {
-        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName: 'sound',
-        mimeType: 'audio/mp4',
-      })
-        .then(response => {
-          if (response.status != 200) {
-            throw "Http Status is not 200";
-          }
-          const body = JSON.parse(response.body);
-          const result = body.result;
-
-          switch (result) {
-            case 'happy':
-              setIsFetch(false);
-              setAxiosData(require('./picture/happy.png'));
-              setCaptionText('Happy');
-              break;
-            case 'normal':
-              setIsFetch(false);
-              setAxiosData(require('./picture/normal.png'));
-              setCaptionText('Normal');
-              break;
-            case 'sad':
-              setIsFetch(false);
-              setAxiosData(require('./picture/sad.png'));
-              setCaptionText('Sad');
-              break;
-          }
-        })
+      await callApi(audioUri);
     } catch (e) {
       console.log(e);
       setIsFetch(false);
@@ -128,7 +148,9 @@ export default function App() {
 
   async function pickDocument() {
     let result = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
-    await goForAxios(result.uri)
+    if (result.type != 'cancel') {
+      await goForAxios(result.uri);
+    }
   }
 
   return (
@@ -151,13 +173,13 @@ export default function App() {
         </Block>
       </Block>
       <Block height={80} safe center fluid style={{ marginTop: 50 }}>
-        <TouchableOpacity onPress={onPressButton}>
-          <Image style={styles.imageButton} source={imagePath} />
+        <TouchableOpacity onPress={onPressButton} disabled={isFetch}>
+          <Image style={styles.imageButton} source={imagePath}/>
         </TouchableOpacity>
       </Block>
       <Block height={200} safe>
         <Text p bold center style={{ marginTop: 80, color: isDarkMode ? "#F3F3F3" : "#727272" }}
-          onPress={recordFlag ? pickDocument : null}
+          onPress={recordFlag && !isFetch ? pickDocument : null}
         >
           open from file
         </Text>
